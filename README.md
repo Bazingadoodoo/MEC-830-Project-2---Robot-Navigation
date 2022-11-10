@@ -2,6 +2,6 @@
 
 Group Member 
 
-Nillan Nimal
-Mohammed Khan
-Cheng-Hao(Howard), Kao
+ - Nillan Nimal
+ - Mohammed Khan
+ - Cheng-Hao(Howard), Kao
