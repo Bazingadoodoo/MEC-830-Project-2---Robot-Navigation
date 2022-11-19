@@ -8,9 +8,11 @@ Group Member
 
  Arduino Board
 
- - pin 3: servo signal pin (pwm)
+
  - pin 4: ultrasonic trig pin
  - pin 5: ultrasonic echo pin
+ - pin 6: servo signal pin (pwm)
+ - pin 7: IR receiver pin
  - pin 8: motor driver in3
  - pin 9: motor driver in4
  - pin 10: motor driver enB (pwm)
@@ -21,5 +23,7 @@ Group Member
 enA: right wheel
 enB: left wheel 
 caster wheel diameter: 2.56cm
+rubber wheel radius: 6.65cm
+distance = (impulses/20)*10.4558cm
 
  
