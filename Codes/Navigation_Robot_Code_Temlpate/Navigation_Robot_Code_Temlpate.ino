@@ -19,11 +19,15 @@
 Servo myservo;
 
 void setup() {
-  TurnLeft(100,3);
+
 }
 
 void loop() {
-
+  for (int i = 0; i <= 3; i++){
+    TurnLeft(100,1000);
+  }
+  TurnOff();
+  delay(2000);
 }
 
 void TurnRight(int motorSpeed, double delayTime){
