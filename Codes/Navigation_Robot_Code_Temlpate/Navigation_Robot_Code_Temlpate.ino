@@ -38,6 +38,7 @@ void ISR_Right(){
 }
 
 void setup() {
+  Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
   attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_Right,RISING);
 }
