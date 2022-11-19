@@ -17,6 +17,5 @@ Group Member
  - pin 11: motor driver enA (pwm)
  - pin 12: motor driver in1
  - pin 13: motor driver in2
- - SDA: IMU signal pin
- - SCL: IMU clock pin
+
  
