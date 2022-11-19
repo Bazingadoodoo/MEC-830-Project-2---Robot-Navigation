@@ -1,6 +1,9 @@
 #include <TimerOne.h>
 #include <Servo.h>
 
+#define leftEncoderPin 2
+#define rightEncoderPin 3
+
 // servo motor-----------------------------
 #define servoPin 3
 
@@ -18,16 +21,17 @@
 
 Servo myservo;
 
-void setup() {
+float diskSlot = 20;
+int leftCounter = 0;
+int rightCounter = 0;
 
+void setup() {
+  attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
+  attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_right,RISING);
 }
 
 void loop() {
-  for (int i = 0; i <= 3; i++){
-    TurnLeft(100,1000);
-  }
-  TurnOff();
-  delay(2000);
+  
 }
 
 void TurnRight(int motorSpeed, double delayTime){
@@ -75,4 +79,13 @@ void TurnOff(){
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
+}
+
+void ISR_Left{
+  leftCounter++;
+}
+
+
+void ISR_Right{
+  rightCounter++;
 }

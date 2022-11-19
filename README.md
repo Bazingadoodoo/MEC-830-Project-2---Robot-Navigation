@@ -18,4 +18,8 @@ Group Member
  - pin 12: motor driver in1
  - pin 13: motor driver in2
 
+enA: right wheel
+enB: left wheel 
+caster wheel diameter: 2.56cm
+
  
