@@ -1,15 +1,19 @@
 #include <TimerOne.h>
 #include <Servo.h>
 
+// encoder---------------------------------
 #define leftEncoderPin 2
 #define rightEncoderPin 3
-
-// servo motor-----------------------------
-#define servoPin 3
 
 // ultrasonic sensor-----------------------
 #define trigPin 4
 #define echoPin 5   
+
+// servo motor-----------------------------
+#define servoPin 6
+
+// IR receiver-----------------------------
+#define irPin 7
 
 // motor driver----------------------------
 #define enA 10      // right wheel
@@ -25,13 +29,25 @@ float diskSlot = 20;
 int leftCounter = 0;
 int rightCounter = 0;
 
+void ISR_Left(){
+  leftCounter++;
+}
+
+void ISR_Right(){
+  rightCounter++;
+}
+
 void setup() {
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
-  attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_right,RISING);
+  attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_Right,RISING);
 }
 
 void loop() {
-  
+  Serial.print("left counter: ");
+  Serial.print(leftCounter);
+  Serial.print("  //  ");
+  Serial.print("right counter: ");
+  Serial.println(rightCounter);
 }
 
 void TurnRight(int motorSpeed, double delayTime){
@@ -79,13 +95,4 @@ void TurnOff(){
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
-}
-
-void ISR_Left{
-  leftCounter++;
-}
-
-
-void ISR_Right{
-  rightCounter++;
 }
