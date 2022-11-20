@@ -2,6 +2,9 @@
 #include <TimerOne.h>
 #define leftEncoderPin 2
 #define rightEncoderPin 3
+float diskSlot = 20;
+int leftCounter = 0;
+int rightCounter = 0;
 
 // ultrasonic sensor-----------------------
 #define trigPin 4
@@ -13,18 +16,18 @@
 Servo myservo;
 
 // IR receiver-----------------------------
+#include <IRremote.hpp>
 #define irPin 7
-float diskSlot = 20;
-int leftCounter = 0;
-int rightCounter = 0;
+IRrecv irReceive(irPin);
+decode_results irInput;
 
 // motor driver----------------------------
-#define enA 10      // right wheel
-#define enB 11      // left wheel
-#define in1 12      // forward
-#define in2 13      // backward
-#define in3 8       // backward
-#define in4 9       // forward
+#define enA 11      // right wheel
+#define enB 10      // left wheel
+#define in1 12      // forward (right)
+#define in2 13      // backward (right)
+#define in3 8       // backward (left)
+#define in4 9       // forward (left)
 
 void ISR_Left(){
   leftCounter++;
@@ -38,14 +41,31 @@ void setup() {
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
   attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_Right,RISING);
+  irReceive.enableIRIn(); 
 }
 
 void loop() {
-  Serial.print("left counter: ");
-  Serial.print(leftCounter);
-  Serial.print("  //  ");
-  Serial.print("right counter: ");
-  Serial.println(rightCounter);
+  if (irReceive.decode(&irInput)){
+    int irReading = irInput.value;
+    switch(irReading){
+      case 6375:
+        DriveForward(100,1000);
+        break;
+      case 19125:
+        DriveBackward(100,1000);
+        break;
+      case 4335:
+        TurnLeft(100,1000);
+        break;
+      case 23205:
+        TurnRight(100,1000);
+        break;
+      case 14535:
+        TurnOff();
+        break;
+    }
+      irReceive.resume();
+  }
 }
 
 void TurnRight(int motorSpeed, double delayTime){
