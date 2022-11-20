@@ -19,23 +19,23 @@ int rightCounter = 0;
 #define echoPin 5   
 
 // servo motor-----------------------------
-#include <Servo.h>
+/*#include <Servo.h>
 #define servoPin 6
-Servo myservo;
+Servo myservo;*/
 
 // IR receiver-----------------------------
 #include <IRremote.hpp>
-#define irPin 7
+#define irPin 11
 IRrecv irReceive(irPin);
 decode_results irInput;
 
 // motor driver----------------------------
-#define enA 10      // right wheel
-#define enB 11      // left wheel
+#define enA 9       // right wheel
+#define enB 6       // left wheel
 #define in1 12      // forward
 #define in2 13      // backward
-#define in3 8       // backward
-#define in4 9       // forward
+#define in3 7       // backward
+#define in4 8       // forward
 
 void ISR_Left(){
   leftCounter++;
@@ -71,12 +71,15 @@ void setup() {
 }
 
 void loop() {
+  /*
   angle = measure_angle();
   Serial.print("left counter: ");
   Serial.print(leftCounter);
   Serial.print("  //  ");
   Serial.print("right counter: ");
   Serial.println(rightCounter);
+  */
+  TurnLeft(100,1);
 }
 
 void TurnRight(int motorSpeed, double delayTime){
