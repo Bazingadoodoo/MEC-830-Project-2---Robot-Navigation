@@ -10,6 +10,9 @@ float angle;
 #include <TimerOne.h>
 #define leftEncoderPin 2
 #define rightEncoderPin 3
+float diskSlot = 20;
+int leftCounter = 0;
+int rightCounter = 0;
 
 // ultrasonic sensor-----------------------
 #define trigPin 4
@@ -34,9 +37,7 @@ decode_results irInput;
 #define in4 9       // forward
 Servo myservo;
 
-float diskSlot = 20;
-int leftCounter = 0;
-int rightCounter = 0;
+
 
 void ISR_Left(){
   leftCounter++;
