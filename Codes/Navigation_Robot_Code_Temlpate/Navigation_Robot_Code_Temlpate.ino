@@ -160,14 +160,6 @@ void setup() {
 }
 
 void loop() {
-
-      }
-    irInput.value = 0;
-    Serial.print("IR Reading: ");
-    Serial.println(irInput.value);
-    irReceive.resume();
-  }
-
   //angle = measure_angle();
   //Serial.print("left counter: ");
   //Serial.print(leftCounter);
