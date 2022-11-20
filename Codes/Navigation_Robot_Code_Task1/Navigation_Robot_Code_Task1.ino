@@ -49,21 +49,22 @@ void loop() {
     int irReading = irInput.value;
     switch(irReading){
       case 6375:
-        DriveForward(100,1000);
+        DriveForward(255,1);
         break;
       case 19125:
-        DriveBackward(100,1000);
+        DriveBackward(255,1);
         break;
       case 4335:
-        TurnLeft(100,1000);
+        TurnLeft(100,1);
         break;
       case 23205:
-        TurnRight(100,1000);
+        TurnRight(100,1);
         break;
       case 14535:
         TurnOff();
         break;
     }
+    irReading = 0;
       irReceive.resume();
   }
 }
