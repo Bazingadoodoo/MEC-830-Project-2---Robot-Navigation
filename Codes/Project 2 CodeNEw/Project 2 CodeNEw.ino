@@ -63,16 +63,15 @@ float measure_angle(void)
 }
 
 void Odometry(float offsetR, float offsetL) {	
-    float R = 0.03325;
+  float R = 0.03325;
 
-    float SR = ((rightCounter - offsetR)/20)*(2*PI*R);
-    float SL = ((leftCounter - offsetL)/20)*(2*PI*R);
+  float SR = ((rightCounter - offsetR)/20)*(2*PI*R);
+  float SL = ((leftCounter - offsetL)/20)*(2*PI*R);
     
-    float meanDistance = (SR+SL)/2;
+  float meanDistance = (SR+SL)/2;
 
-    return meanDistance;
+  return meanDistance;
 }
-
   
 
 void setup() {

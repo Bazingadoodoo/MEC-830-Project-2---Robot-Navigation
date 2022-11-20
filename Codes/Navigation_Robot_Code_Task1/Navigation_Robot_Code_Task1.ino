@@ -5,6 +5,8 @@
 float diskSlot = 20;
 int leftCounter = 0;
 int rightCounter = 0;
+int Left = 0;
+int Right = 0;
 
 // ultrasonic sensor-----------------------
 #define trigPin 4
@@ -28,6 +30,24 @@ decode_results irInput;
 #define in2 13      // backward
 #define in3 7       // backward
 #define in4 8       // forward
+
+void ISR_Left(){
+  if (Left){
+    leftCounter++;
+  }
+  else{
+    leftCounter--;
+  }
+}
+
+void ISR_Right(){
+  if (Right){
+    rightCounter++;
+  }
+  else{
+    rightCounter--;
+  }
+}
 
 void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime){
   digitalWrite(in1, LOW);
@@ -77,14 +97,6 @@ void TurnOff(){
   digitalWrite(in4, LOW);
 }
 
-void ISR_Left(){
-  leftCounter++;
-}
-
-void ISR_Right(){
-  rightCounter++;
-}
-
 void setup() {
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
@@ -97,28 +109,33 @@ void loop() {
       int irReading = irInput.value;
       switch(irReading){
         case 6375:
-          DriveForward(100,90,1);
+          DriveForward(100,71,1);
           break;
         case 19125:
-          DriveBackward(100,90,1);
+          DriveBackward(100,71,1);
           break;
         case 4335:
-          TurnLeft(100,70,1);
+          TurnLeft(100,71,1);
           break;
         case 23205:
-          TurnRight(100,70,1);
+          TurnRight(100,71,1);
           break;
         case 14535:
           TurnOff();
           break;
         case 12495:
-          TurnLeft(0,65,1);
+          TurnLeft(0,71,1);
           break;
         case 31365:
-          TurnRight(90,0,1);
+          TurnRight(100,0,1);
           break;
     }
     irReading = 0;
     irReceive.resume();
   }
+  Serial.print("left counter: ");
+  Serial.print(leftCounter);
+  Serial.print("  //  ");
+  Serial.print("right counter: ");
+  Serial.println(rightCounter);
 }
