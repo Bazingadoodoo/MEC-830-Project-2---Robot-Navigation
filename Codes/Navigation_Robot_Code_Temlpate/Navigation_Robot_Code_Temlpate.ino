@@ -5,7 +5,7 @@
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 float angle_offset;
 float angle;
-//test
+
 // encoder---------------------------------
 #include <TimerOne.h>
 #define leftEncoderPin 2
@@ -13,6 +13,8 @@ float angle;
 float diskSlot = 20;
 int leftCounter = 0;
 int rightCounter = 0;
+int Right = 0;
+int Left = 0;
 
 // ultrasonic sensor-----------------------
 #define trigPin 4
@@ -38,11 +40,98 @@ decode_results irInput;
 #define in4 8       // forward
 
 void ISR_Left(){
-  leftCounter++;
+  if (Left){
+    leftCounter++;
+  }
+  else{
+    leftCounter--;
+  }
 }
 
 void ISR_Right(){
-  rightCounter++;
+  if (Right){
+    rightCounter++;
+  }
+  else{
+    rightCounter--;
+  }
+}
+
+void TurnRight(int motorSpeed, double delayTime){
+  Right = 0;
+  Left = 1;
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  analogWrite(enA, motorSpeed);
+  analogWrite(enB, motorSpeed);
+  delay(delayTime);
+}
+
+void TurnLeft(int motorSpeed, double delayTime){
+  Right = 1;
+  Left = 0;
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+  analogWrite(enA, motorSpeed);
+  analogWrite(enB, motorSpeed);
+  delay(delayTime);
+}
+
+void DriveForward(int motorSpeed, double delayTime){
+  Right = 1;
+  Left = 1;
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  analogWrite(enA, motorSpeed);
+  analogWrite(enB, motorSpeed);
+  delay(delayTime);
+}
+
+void DriveBackward(int motorSpeed, double delayTime){
+  Right = 0;
+  Left = 0;
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+  analogWrite(enA, motorSpeed);
+  analogWrite(enB, motorSpeed);
+  delay(delayTime);
+}
+
+void TurnOff(){
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+}
+
+float measure_angle(void)
+{
+  float z_angle;// to determine absolute orientation 
+  /* Get a new sensor event */ 
+  sensors_event_t event; 
+  bno.getEvent(&event);
+  z_angle = event.orientation.x; //get z-axis rotation angle
+  Serial.println(z_angle);
+  return z_angle;
+}
+
+void Odometry(float offsetR, float offsetL) {  
+  float R = 0.03325;
+
+  float SR = ((rightCounter - offsetR)/20)*(2*PI*R);
+  float SL = ((leftCounter - offsetL)/20)*(2*PI*R);
+    
+  float meanDistance = (SR+SL)/2;
+
+  return meanDistance;
 }
 
 void setup() {
@@ -71,71 +160,34 @@ void setup() {
 }
 
 void loop() {
-  /*
-  angle = measure_angle();
+    if (irReceive.decode(&irInput)){
+      int irReading = irInput.value;
+      switch(irReading){
+        case 6375:
+          DriveForward(255,1);
+          break;
+        case 19125:
+          DriveBackward(255,1);
+          break;
+        case 4335:
+          TurnLeft(100,1);
+          break;
+        case 23205:
+          TurnRight(100,1);
+          break;
+        case 14535:
+          TurnOff();
+          break;
+    }
+    irReading = 0;
+      irReceive.resume();
+  }
+ 
+  //angle = measure_angle();
   Serial.print("left counter: ");
   Serial.print(leftCounter);
   Serial.print("  //  ");
   Serial.print("right counter: ");
   Serial.println(rightCounter);
-  */
-  TurnLeft(100,1);
-}
-
-void TurnRight(int motorSpeed, double delayTime){
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void TurnLeft(int motorSpeed, double delayTime){
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void DriveForward(int motorSpeed, double delayTime){
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void DriveBackward(int motorSpeed, double delayTime){
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void TurnOff(){
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, LOW);
-}
-
-float measure_angle(void)
-{
-  float z_angle;// to determine absolute orientation 
-  /* Get a new sensor event */ 
-  sensors_event_t event; 
-  bno.getEvent(&event);
-  z_angle = event.orientation.x; //get z-axis rotation angle
-  Serial.println(z_angle);
-  return z_angle;
+  //TurnLeft(100,1);
 }

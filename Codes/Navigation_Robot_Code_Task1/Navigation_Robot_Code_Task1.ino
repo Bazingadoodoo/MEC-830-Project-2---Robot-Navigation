@@ -29,14 +29,6 @@ decode_results irInput;
 #define in3 7       // backward
 #define in4 8       // forward
 
-void ISR_Left(){
-  leftCounter++;
-}
-
-void ISR_Right(){
-  rightCounter++;
-}
-
 void setup() {
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
@@ -114,4 +106,12 @@ void TurnOff(){
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
+}
+
+void ISR_Left(){
+  leftCounter++;
+}
+
+void ISR_Right(){
+  rightCounter++;
 }
