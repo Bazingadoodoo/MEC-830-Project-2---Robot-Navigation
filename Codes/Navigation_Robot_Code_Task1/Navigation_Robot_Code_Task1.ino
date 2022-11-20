@@ -1,11 +1,3 @@
-//IMU--------------------------------------
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
-#include <utility/imumaths.h>
-Adafruit_BNO055 bno = Adafruit_BNO055(55);
-float angle_offset;
-float angle;
-
 // encoder---------------------------------
 #include <TimerOne.h>
 #define leftEncoderPin 2
@@ -18,12 +10,13 @@ float angle;
 // servo motor-----------------------------
 #include <Servo.h>
 #define servoPin 6
+Servo myservo;
 
 // IR receiver-----------------------------
-#include <IRremote.hpp>
 #define irPin 7
-IRrecv irReceive(irPin);
-decode_results irInput;
+float diskSlot = 20;
+int leftCounter = 0;
+int rightCounter = 0;
 
 // motor driver----------------------------
 #define enA 10      // right wheel
@@ -32,11 +25,6 @@ decode_results irInput;
 #define in2 13      // backward
 #define in3 8       // backward
 #define in4 9       // forward
-Servo myservo;
-
-float diskSlot = 20;
-int leftCounter = 0;
-int rightCounter = 0;
 
 void ISR_Left(){
   leftCounter++;
@@ -50,29 +38,9 @@ void setup() {
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
   attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_Right,RISING);
-  irReceive.enableIRIn();
-  Serial.println("Calibrating IMU");
-
-  /* Initialise the sensor */
-  if(!bno.begin())
-  {
-    /* There was a problem detecting the imu */
-    Serial.print("no imu sensor detected");
-    while(1);
-    
-    delay(2000);
-    bno.setExtCrystalUse(true);
-    Serial.println("Done Calibrating");
-    Serial.println("Starting...");
-    sensors_event_t event; 
-    bno.getEvent(&event);
-    angle_offset = event.orientation.x; //get z-axis rotation angle
-    Serial.println(angle_offset);
-  }
 }
 
 void loop() {
-  angle = measure_angle();
   Serial.print("left counter: ");
   Serial.print(leftCounter);
   Serial.print("  //  ");
@@ -125,15 +93,4 @@ void TurnOff(){
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
-}
-
-float measure_angle(void)
-{
-  float z_angle;// to determine absolute orientation 
-  /* Get a new sensor event */ 
-  sensors_event_t event; 
-  bno.getEvent(&event);
-  z_angle = event.orientation.x; //get z-axis rotation angle
-  Serial.println(z_angle);
-  return z_angle;
 }
