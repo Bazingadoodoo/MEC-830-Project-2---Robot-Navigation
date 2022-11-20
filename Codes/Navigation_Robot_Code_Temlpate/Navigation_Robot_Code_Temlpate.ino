@@ -21,6 +21,7 @@ int rightCounter = 0;
 // servo motor-----------------------------
 #include <Servo.h>
 #define servoPin 6
+Servo myservo;
 
 // IR receiver-----------------------------
 #include <IRremote.hpp>
@@ -35,9 +36,6 @@ decode_results irInput;
 #define in2 13      // backward
 #define in3 8       // backward
 #define in4 9       // forward
-Servo myservo;
-
-
 
 void ISR_Left(){
   leftCounter++;
