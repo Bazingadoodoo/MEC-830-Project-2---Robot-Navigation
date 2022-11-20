@@ -37,27 +37,27 @@ void setup() {
 }
 
 void loop() {
-  if (irReceive.decode(&irInput)){
-    int irReading = irInput.value;
-    switch(irReading){
-      case 6375:
-        DriveForward(255,1);
-        break;
-      case 19125:
-        DriveBackward(255,1);
-        break;
-      case 4335:
-        TurnLeft(100,1);
-        break;
-      case 23205:
-        TurnRight(100,1);
-        break;
-      case 14535:
-        TurnOff();
-        break;
+    if (irReceive.decode(&irInput)){
+      int irReading = irInput.value;
+      switch(irReading){
+        case 6375:
+          DriveForward(200,150,1);
+          break;
+        case 19125:
+          DriveBackward(200,150,1);
+          break;
+        case 4335:
+          TurnLeft(100,65,1);
+          break;
+        case 23205:
+          TurnRight(100,70,1);
+          break;
+        case 14535:
+          TurnOff();
+          break;
     }
     irReading = 0;
-      irReceive.resume();
+    irReceive.resume();
   }
 }
 
@@ -72,6 +72,7 @@ void TurnRight(int motorSpeed, double delayTime){
 }
 
 void TurnLeft(int motorSpeed, double delayTime){
+  
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);

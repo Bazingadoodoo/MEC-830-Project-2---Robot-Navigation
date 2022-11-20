@@ -57,51 +57,51 @@ void ISR_Right(){
   }
 }
 
-void TurnRight(int motorSpeed, double delayTime){
+void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime){
   Right = 0;
   Left = 1;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
+  analogWrite(enA, motorSpeedR);
+  analogWrite(enB, motorSpeedL);
   delay(delayTime);
 }
 
-void TurnLeft(int motorSpeed, double delayTime){
+void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime){
   Right = 1;
   Left = 0;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
+  analogWrite(enA, motorSpeedR);
+  analogWrite(enB, motorSpeedL);
   delay(delayTime);
 }
 
-void DriveForward(int motorSpeed, double delayTime){
+void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime){
   Right = 1;
   Left = 1;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
+  analogWrite(enA, motorSpeedR);
+  analogWrite(enB, motorSpeedL);
   delay(delayTime);
 }
 
-void DriveBackward(int motorSpeed, double delayTime){
+void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime){
   Right = 0;
   Left = 0;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
+  analogWrite(enA, motorSpeedR);
+  analogWrite(enB, motorSpeedL);
   delay(delayTime);
 }
 
@@ -160,34 +160,19 @@ void setup() {
 }
 
 void loop() {
-    if (irReceive.decode(&irInput)){
-      int irReading = irInput.value;
-      switch(irReading){
-        case 6375:
-          DriveForward(255,1);
-          break;
-        case 19125:
-          DriveBackward(255,1);
-          break;
-        case 4335:
-          TurnLeft(100,1);
-          break;
-        case 23205:
-          TurnRight(100,1);
-          break;
-        case 14535:
-          TurnOff();
-          break;
-    }
-    irReading = 0;
-      irReceive.resume();
+
+      }
+    irInput.value = 0;
+    Serial.print("IR Reading: ");
+    Serial.println(irInput.value);
+    irReceive.resume();
   }
- 
+
   //angle = measure_angle();
-  Serial.print("left counter: ");
-  Serial.print(leftCounter);
-  Serial.print("  //  ");
-  Serial.print("right counter: ");
-  Serial.println(rightCounter);
+  //Serial.print("left counter: ");
+  //Serial.print(leftCounter);
+  //Serial.print("  //  ");
+  //Serial.print("right counter: ");
+  //Serial.println(rightCounter);
   //TurnLeft(100,1);
 }
