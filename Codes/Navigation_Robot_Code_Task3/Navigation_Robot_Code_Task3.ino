@@ -49,8 +49,21 @@ void ISR_Right() {
 }
 
 void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime) {
+  Right = 1;
+  Left = 0; 
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in 4, LOW);
+  analogWrite(enA, motorSpeedR);
+  analogWrite(enB, motorSpeedL);
+  delay(delayTime);
+  TurnOff();
+}
+
+void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 0;
-  Left = 1;
+  Left = 1; 
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
@@ -58,23 +71,12 @@ void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime) {
   analogWrite(enA, motorSpeedR);
   analogWrite(enB, motorSpeedL);
   delay(delayTime);
-}
-
-void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime) {
-  Right = 1;
-  Left = 0;
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeedR);
-  analogWrite(enB, motorSpeedL);
-  delay(delayTime);
+  TurnOff();
 }
 
 void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 1;
-  Left = 1;
+  Left = 1; 
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
@@ -82,11 +84,12 @@ void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime) {
   analogWrite(enA, motorSpeedR);
   analogWrite(enB, motorSpeedL);
   delay(delayTime);
+  TurnOff();
 }
 
 void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 0;
-  Left = 0;
+  Left = 0; 
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, HIGH);
@@ -94,9 +97,12 @@ void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime) {
   analogWrite(enA, motorSpeedR);
   analogWrite(enB, motorSpeedL);
   delay(delayTime);
+  TurnOff();
 }
 
 void TurnOff() {
+  R = 0;
+  L = 0;
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
@@ -114,8 +120,8 @@ float measure_angle(void)
   return z_angle;
 }
 
-
-void ISR_ObstacleDetection() {
+/*
+  void ISR_ObstacleDetection() {
   Timer1.detachInterrupt();
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -126,7 +132,7 @@ void ISR_ObstacleDetection() {
   obstacle_distance = (duration * 0.034 / 2.0) * 1.0227 + 0.0031;
   Serial.println(obstacle_distance);
   Timer1.attachInterrupt(ISR_ObstacleDetection);
-}
+  }*/
 
 void setup() {
   Serial.begin(9600);
@@ -138,5 +144,17 @@ void setup() {
 }
 
 void loop() {
-
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  obstacle_distance = (duration * 0.034 / 2.0) * 1.0227 + 0.0031;
+  Serial.println(obstacle_distance);
+  if (obstacle_distance > 40) {
+    DriveForward(200, 180);
+  }
+  if (obstacle_distance < 40) {
+    DriveForward(200, 180);
 }

@@ -127,12 +127,9 @@ float measure_angle(void)
 
 void Odometry(float offsetR, float offsetL) {  
   float R = 0.03325;
-
   float SR = ((rightCounter - offsetR)/20)*(2*PI*R);
   float SL = ((leftCounter - offsetL)/20)*(2*PI*R);
-    
   float meanDistance = (SR+SL)/2;
-
   return meanDistance;
 }
 
@@ -143,56 +140,24 @@ void setup() {
   irReceive.enableIRIn();
   Serial.println("Calibrating IMU");
 
-  Right = 1;
-  Left = 0;
-
   /* Initialise the sensor */
   if(!bno.begin())
   {
     /* There was a problem detecting the imu */
     Serial.print("no imu sensor detected");
     while(1);
-    
-    delay(2000);
-    bno.setExtCrystalUse(true);
-    Serial.println("Done Calibrating");
-    Serial.println("Starting...");
-    sensors_event_t event; 
-    bno.getEvent(&event);
-    angle_offset = event.orientation.x; //get z-axis rotation angle
-    Serial.println(angle_offset);
+    {
+      delay(2000);
+      bno.setExtCrystalUse(true);
+      Serial.println("Done Calibrating");
+      Serial.println("Starting...");
+      sensors_event_t event; 
+      bno.getEvent(&event);
+      angle_offset = event.orientation.x; //get z-axis rotation angle
+      Serial.println(angle_offset);
+    }
   }
 }
 
 void loop() {
-    if (irReceive.decode(&irInput)){
-      int irReading = irInput.value;
-      switch(irReading){
-        case 6375:
-          DriveForward(255,1);
-          break;
-        case 19125:
-          DriveBackward(255,1);
-          break;
-        case 4335:
-          TurnLeft(100,1);
-          break;
-        case 23205:
-          TurnRight(100,1);
-          break;
-        case 14535:
-          TurnOff();
-          break;
-    }
-    irReading = 0;
-      irReceive.resume();
-  }
- 
-  angle = measure_angle();
-  //Serial.print("left counter: ");
-  //Serial.print(leftCounter);
- //Serial.print("  //  ");
-  //erial.print("right counter: ");
-  //Serial.println(rightCounter);
-  //TurnLeft(100,1);
 }
