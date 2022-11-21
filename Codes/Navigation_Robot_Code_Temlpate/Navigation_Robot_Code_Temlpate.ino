@@ -57,8 +57,6 @@ void ISR_Right(){
   }
 }
 
-
-
 void TurnRight(int motorSpeed, double delayTime){
   Right = 0;
   Left = 1;
