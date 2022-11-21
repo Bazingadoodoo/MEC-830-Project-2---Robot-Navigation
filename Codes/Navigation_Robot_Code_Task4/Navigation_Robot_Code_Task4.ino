@@ -141,21 +141,25 @@ void setup() {
   Serial.println("Calibrating IMU");
 
   /* Initialise the sensor */
-  if(!bno.begin())
+  if (!bno.begin())
   {
     /* There was a problem detecting the imu */
+
     Serial.print("no imu sensor detected");
-    while(1);
-    {
-      delay(2000);
-      bno.setExtCrystalUse(true);
-      Serial.println("Done Calibrating");
-      Serial.println("Starting...");
-      sensors_event_t event; 
-      bno.getEvent(&event);
-      angle_offset = event.orientation.x; //get z-axis rotation angle
-      Serial.println(angle_offset);
-    }
+    while (1);
+  }
+  delay(2000);
+  bno.setExtCrystalUse(true);
+  Serial.println("Done Calibrating");
+  Serial.println("Starting...");
+  sensors_event_t event;
+  bno.getEvent(&event);
+  angle_offset = event.orientation.x; //get z-axis rotation angle
+  angle_offset_mapped = angle_offset + 180;
+  if (angle_offset_mapped >360){
+    angle_offset_mapped = angle_offset_mapped - 360;
+    Serial.print("Offset: ");
+    Serial.println(angle_offset_mapped);
   }
 }
 

@@ -156,5 +156,12 @@ void loop() {
     DriveForward(200, 180);
   }
   if (obstacle_distance < 40) {
-    DriveForward(200, 180);
+    TurnOff();
+    RotateRight();
+    TurnOff();
+    RotateLeft();
+    TurnOff();
+    RotateRight();
+    TurnOff();
+    DriveForward();    
 }
