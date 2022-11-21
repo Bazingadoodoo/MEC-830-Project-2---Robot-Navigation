@@ -18,18 +18,9 @@ int Left = 0;
 
 // ultrasonic sensor-----------------------
 #define trigPin 4
-#define echoPin 5   
-
-// servo motor-----------------------------
-/*#include <Servo.h>
-#define servoPin 6
-Servo myservo;*/
-
-// IR receiver-----------------------------
-#include <IRremote.hpp>
-#define irPin 11
-IRrecv irReceive(irPin);
-decode_results irInput;
+#define echoPin 5
+float duration;
+float obstacle_distance;
 
 // motor driver----------------------------
 #define enA 9       // right wheel
@@ -39,25 +30,25 @@ decode_results irInput;
 #define in3 7       // backward
 #define in4 8       // forward
 
-void ISR_Left(){
-  if (Left){
+void ISR_Left() {
+  if (Left) {
     leftCounter++;
   }
-  else{
+  else {
     leftCounter--;
   }
 }
 
-void ISR_Right(){
-  if (Right){
+void ISR_Right() {
+  if (Right) {
     rightCounter++;
   }
-  else{
+  else {
     rightCounter--;
   }
 }
 
-void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime){
+void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 0;
   Left = 1;
   digitalWrite(in1, LOW);
@@ -69,7 +60,7 @@ void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime){
   delay(delayTime);
 }
 
-void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime){
+void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 1;
   Left = 0;
   digitalWrite(in1, HIGH);
@@ -81,7 +72,7 @@ void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime){
   delay(delayTime);
 }
 
-void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime){
+void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 1;
   Left = 1;
   digitalWrite(in1, HIGH);
@@ -93,7 +84,7 @@ void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime){
   delay(delayTime);
 }
 
-void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime){
+void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 0;
   Left = 0;
   digitalWrite(in1, LOW);
@@ -105,7 +96,7 @@ void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime){
   delay(delayTime);
 }
 
-void TurnOff(){
+void TurnOff() {
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
@@ -114,60 +105,39 @@ void TurnOff(){
 
 float measure_angle(void)
 {
-  float z_angle;// to determine absolute orientation 
-  /* Get a new sensor event */ 
-  sensors_event_t event; 
+  float z_angle;// to determine absolute orientation
+  /* Get a new sensor event */
+  sensors_event_t event;
   bno.getEvent(&event);
   z_angle = event.orientation.x; //get z-axis rotation angle
   Serial.println(z_angle);
   return z_angle;
 }
 
-void Odometry(float offsetR, float offsetL) {  
-  float R = 0.03325;
 
-  float SR = ((rightCounter - offsetR)/20)*(2*PI*R);
-  float SL = ((leftCounter - offsetL)/20)*(2*PI*R);
-    
-  float meanDistance = (SR+SL)/2;
-
-  return meanDistance;
+void ISR_ObstacleDetection(){
+  Timer1.detachInterrupt();
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  obstacle_distance = (duration * 0.034 / 2.0)*1.0227+ 0.0031;
+  Serial.println(obstacle_distance);
+  Timer1.attachInterrupt(ISR_ObstacleDetection);
 }
 
 void setup() {
   Serial.begin(9600);
-  attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
-  attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_Right,RISING);
-  irReceive.enableIRIn();
-  Serial.println("Calibrating IMU");
-
-  Right = 1;
-  Left = 0;
-
-  /* Initialise the sensor */
-  if(!bno.begin())
-  {
-    /* There was a problem detecting the imu */
-    Serial.print("no imu sensor detected");
-    while(1);
-    
-    delay(2000);
-    bno.setExtCrystalUse(true);
-    Serial.println("Done Calibrating");
-    Serial.println("Starting...");
-    sensors_event_t event; 
-    bno.getEvent(&event);
-    angle_offset = event.orientation.x; //get z-axis rotation angle
-    Serial.println(angle_offset);
-  }
+  Timer1.initialize(5000000);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(leftEncoderPin), ISR_Left, RISING);
+  attachInterrupt(digitalPinToInterrupt(rightEncoderPin), ISR_Right, RISING);
+  Timer1.attachInterrupt(ISR_ObstacleDetection);
 }
 
 void loop() {
-  //angle = measure_angle();
-  Serial.print("left counter: ");
-  Serial.print(leftCounter);
-  Serial.print("  //  ");
-  Serial.print("right counter: ");
-  Serial.println(rightCounter);
-  //TurnLeft(100,1);
+
 }
