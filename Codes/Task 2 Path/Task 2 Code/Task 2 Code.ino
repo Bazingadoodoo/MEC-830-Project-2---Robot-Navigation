@@ -9,6 +9,7 @@ Smoothed <float> average_rot_speedR;
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 float angle_offset;
 float angle;
+bool start = 1; 
 
 // encoder---------------------------------
 #define leftEncoderPin 2
@@ -41,6 +42,8 @@ float previousTimeR = 0;
 float currentTimeR = 0;
 float previousTimeL = 0;
 float currentTimeL = 0;
+long currentTime;
+long previousTime =0;
 
 volatile long currentEncoderL;
 volatile float oldPositionL = 0;
@@ -147,28 +150,23 @@ float measure_angle(void)
 }
 
 
-
 void Odometry(float theta) {
 
-  float SR = (float)((rightCounter-prevEncoderR)/40)*(2*PI*R);
-  float SL = (float)((leftCounter-prevEncoderL)/40)*(2*PI*R);
+  currentTime = millis();
 
-  Serial.print(rightCounter);
-  Serial.print(" ");
-  Serial.print(prevEncoderR);
-  Serial.println();
+  if ((currentTime -previousTime)>200){
 
-  prevEncoderL = leftCounter;
-  prevEncoderR = rightCounter;
+    float SR = (float)((rightCounter-prevEncoderR)/80.0)*(2*PI*R);
+    float SL = (float)((leftCounter-prevEncoderL)/80.0)*(2*PI*R);
 
-  meanDistance = (SL + SR) / 2;
-  posX = posX + meanDistance * cos (theta);
-  posY = posY + meanDistance * sin(theta);
+    prevEncoderL = leftCounter;
+    prevEncoderR = rightCounter;
 
-  Serial.print(rightCounter);
-  Serial.print(" ");
-  Serial.print(leftCounter);
-  Serial.println();
+    meanDistance = (SL + SR) / 2;
+    posX = posX + meanDistance * cos (theta);
+    posY = posY + meanDistance * sin(theta);
+    previousTime = currentTime;
+  }
 
 }
 
@@ -197,8 +195,41 @@ void setup() {
   }
 }
 
+void slow_acceleration(){
+  for (int i =0; i<200;i++){
+      digitalWrite(in1, HIGH);
+      digitalWrite(in2, LOW);
+      digitalWrite(in3, LOW);
+      digitalWrite(in4, HIGH);
+      analogWrite(enA, i);
+      analogWrite(enB, i);
+      delay(50);
+  }
+}
+
+
 void loop() {
   angle = measure_angle();
   Odometry(angle);
+  if (start){
+    slow_acceleration();
+    start = 0;
+    Serial.println(start);
+  }
 
+  // if (posX <=1){
+  //   Right = 1;
+  //   Left = 1;
+  //   digitalWrite(in1, HIGH);
+  //   digitalWrite(in2, LOW);
+  //   digitalWrite(in3, LOW);
+  //   digitalWrite(in4, HIGH);
+  //   analogWrite(enA, 150);
+  //   analogWrite(enB, 200);
+  // }
+  // else{
+  //   analogWrite(enA, 0);
+  //   analogWrite(enB, 0);
+  // }
+  
 }
