@@ -115,7 +115,7 @@ float measure_angle(void)
 }
 
 
-void ISR_ObstacleDetection(){
+void ISR_ObstacleDetection() {
   Timer1.detachInterrupt();
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
@@ -123,14 +123,13 @@ void ISR_ObstacleDetection(){
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
-  obstacle_distance = (duration * 0.034 / 2.0)*1.0227+ 0.0031;
+  obstacle_distance = (duration * 0.034 / 2.0) * 1.0227 + 0.0031;
   Serial.println(obstacle_distance);
   Timer1.attachInterrupt(ISR_ObstacleDetection);
 }
 
 void setup() {
   Serial.begin(9600);
-  Timer1.initialize(5000000);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin), ISR_Left, RISING);
