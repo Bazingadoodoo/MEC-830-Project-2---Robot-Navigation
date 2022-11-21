@@ -143,6 +143,9 @@ void setup() {
   irReceive.enableIRIn();
   Serial.println("Calibrating IMU");
 
+  Right = 1;
+  Left = 0;
+
   /* Initialise the sensor */
   if(!bno.begin())
   {
