@@ -73,13 +73,13 @@ void RotateRight(int motorSpeedL, int motorSpeedR, float startAngle, float rotat
     digitalWrite(in4, LOW);
     analogWrite(enA, motorSpeedR);
     analogWrite(enB, motorSpeedL);
-    float Z = measure_angle();
-    float Z_mapped = Z + 180;
     //-----------------------------------------------------------------
-    if (Z_mapped >= 360)            // when updating Z_mapped this way, 
-    {                               // the while loop cannot properly 
-      Z_mapped = Z_mapped - 360;    // determine when to execute and
-    }                               // when to stop
+    float Z = measure_angle();      // when updating Z_mapped this way,
+    float Z_mapped = Z + 180;       // the while loop cannot properly 
+    if (Z_mapped >= 360)            // determine when to execute and 
+    {                               // when to stop
+      Z_mapped = Z_mapped - 360;    
+    }                               
     //-----------------------------------------------------------------
     //Z_mapped++;                   // when updating Z_mapped this way,
                                     // the while loop functions normally
@@ -94,7 +94,7 @@ void RotateRight(int motorSpeedL, int motorSpeedR, float startAngle, float rotat
     Serial.print("  //  ");
     Serial.print("Angle Difference: ");
     Serial.println(Z_mapped - startAngle);
-    delay(20);
+    delay(100);
   }
   if ((Z_mapped - startAngle) >= rotation_angle)
   {
