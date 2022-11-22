@@ -5,7 +5,7 @@
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 float angle_offset;
 float angle;
-int angle_offset_mapped;
+float angle_offset_mapped;
 
 // encoder---------------------------------
 #define leftEncoderPin 2
@@ -33,7 +33,7 @@ decode_results irInput;
 
 // motor driver----------------------------
 #define enA 9       // right wheel
-#define enB 6      // left wheel
+#define enB 6       // left wheel
 #define in1 12      // forward
 #define in2 13      // backward
 #define in3 7       // backward
@@ -57,29 +57,55 @@ void ISR_Left() {
   }
 }
 
-void RotateRight(int motorSpeedL, int motorSpeedR, int startAngle, int rotation_angle) {
-  double Z = measure_angle();
-  double Z_mapped = Z + 180;
-  if (Z_mapped >= 360) {
+void RotateRight(int motorSpeedL, int motorSpeedR, float startAngle, float rotation_angle)
+{
+  float Z = measure_angle();
+  float Z_mapped = Z + 180;
+  if (Z_mapped >= 360)
+  {
     Z_mapped = Z_mapped - 360;
   }
-  Serial.print("Angle Difference: ");
-  Serial.println(Z_mapped - startAngle);
-  if (Z_mapped - startAngle < rotation_angle) {
+  while ((Z_mapped - startAngle) < 90)
+  {
     digitalWrite(in1, HIGH);
     digitalWrite(in2, LOW);
     digitalWrite(in3, HIGH);
     digitalWrite(in4, LOW);
     analogWrite(enA, motorSpeedR);
     analogWrite(enB, motorSpeedL);
-    delay(300);
+    float Z = measure_angle();
+    float Z_mapped = Z + 180;
+    //-----------------------------------------------------------------
+    if (Z_mapped >= 360)            // when updating Z_mapped this way, 
+    {                               // the while loop cannot properly 
+      Z_mapped = Z_mapped - 360;    // determine when to execute and
+    }                               // when to stop
+    //-----------------------------------------------------------------
+    //Z_mapped++;                   // when updating Z_mapped this way,
+                                    // the while loop functions normally
+    //-----------------------------------------------------------------
+    Serial.print("Z_mapped: ");
+    Serial.print(Z_mapped);
+    Serial.print("        //  ");
+    Serial.print("startAngle: ");
+    Serial.println(startAngle);
+    Serial.print("rotation_angle: ");
+    Serial.print(rotation_angle);
+    Serial.print("  //  ");
+    Serial.print("Angle Difference: ");
+    Serial.println(Z_mapped - startAngle);
+    delay(20);
+  }
+  if ((Z_mapped - startAngle) >= rotation_angle)
+  {
     TurnOff();
+    Serial.println("off");
   }
 }
 
 void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 1;
-  Left = 0; 
+  Left = 0;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
@@ -92,7 +118,7 @@ void TurnRight(int motorSpeedL, int motorSpeedR, double delayTime) {
 
 void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 0;
-  Left = 1; 
+  Left = 1;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
@@ -105,7 +131,7 @@ void TurnLeft(int motorSpeedL, int motorSpeedR, double delayTime) {
 
 void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 1;
-  Left = 1; 
+  Left = 1;
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, HIGH);
@@ -118,7 +144,7 @@ void DriveForward(int motorSpeedL, int motorSpeedR, double delayTime) {
 
 void DriveBackward(int motorSpeedL, int motorSpeedR, double delayTime) {
   Right = 0;
-  Left = 0; 
+  Left = 0;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
@@ -157,11 +183,13 @@ void Odometry(float offsetR, float offsetL) {
   return meanDistance;
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(leftEncoderPin), ISR_Left, RISING);
   attachInterrupt(digitalPinToInterrupt(rightEncoderPin), ISR_Right, RISING);
   irReceive.enableIRIn();
+  Serial.println();
   Serial.println("Calibrating IMU");
 
   /* Initialise the sensor */
@@ -171,28 +199,30 @@ void setup() {
 
     Serial.print("no imu sensor detected");
     while (1);
-    {
-      delay(2000);
-      bno.setExtCrystalUse(true);
-      Serial.println("Done Calibrating");
-      Serial.println("Starting...");
-      sensors_event_t event;
-      bno.getEvent(&event);
-      angle_offset = event.orientation.x; //get z-axis rotation angle
-      angle_offset_mapped = angle_offset + 180;
-      if (angle_offset_mapped >360){
-        angle_offset_mapped = angle_offset_mapped - 360;
-        Serial.print("Offset: ");
-        Serial.println(angle_offset_mapped);
-      }
-    }
   }
+  delay(2000);
+  bno.setExtCrystalUse(true);
+  Serial.println("Done Calibrating");
+  Serial.println("Starting...");
+  sensors_event_t event;
+  bno.getEvent(&event);
+  angle_offset = event.orientation.x; //get z-axis rotation angle
+  angle_offset_mapped = angle_offset + 180;
+  if (angle_offset_mapped > 360)
+  {
+    angle_offset_mapped = angle_offset_mapped - 360;
+  }
+  Serial.print("Offset: ");
+  Serial.println(angle_offset_mapped);
 }
 
-void loop() {
-  if (irReceive.decode(&irInput)) {
+void loop()
+{
+  if (irReceive.decode(&irInput))
+  {
     int irReading = irInput.value;
-    switch (irReading) {
+    switch (irReading)
+    {
       case 6375:                // button 2
         DriveForward(123, 100, 1000);
         break;
