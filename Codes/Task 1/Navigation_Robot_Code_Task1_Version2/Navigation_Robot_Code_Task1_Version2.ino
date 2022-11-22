@@ -35,8 +35,12 @@ int minSpeed = 0;
 float kp = 15;      
 int pControlSpeedR;
 int pControlSpeedL;
+int initialSpeed;
+float runTime;
+float targetAngle;
 
-void setup()
+
+void setup()                                                            // Setup
 {
   Serial.begin(9600);
   irReceive.enableIRIn();
@@ -58,7 +62,7 @@ void setup()
   Serial.println(angle_offset);
 }
 
-void loop()
+void loop()                                                             // Main Loop
 {
   if (irReceive.decode(&irInput))
   {
@@ -66,10 +70,16 @@ void loop()
     switch (irReading)
     {
       case 6375:                // button 2
-        DriveForward(120,0,10000);
+        initialSpeed = 120;
+        targetAngle = 0;
+        runTime = 5000;
+        DriveForward();
         break;
       case 19125:               // button 8
-        DriveBackward(120,0,300);
+        initialSpeed = 120;
+        targetAngle = 0;
+        runTime = 5000;
+        DriveBackward();
         break;
       case 4335:                // button 4
         break;
@@ -90,7 +100,7 @@ void loop()
   }
 }
 
-float measure_angle(void)
+float measure_angle(void)                                               // IMU Angle Measurement
 {
   float z_angle;
   sensors_event_t event;
@@ -100,9 +110,8 @@ float measure_angle(void)
   return z_angle;
 }
 
-void SpeedControlF (int initialSpeed, float targetAngle)
+void SpeedControlF ()                                                   // Speed Control Forward
 {
-  Serial.println(targetAngle);
   int currentAngle = measure_angle();
   if (currentAngle > 180)
   {
@@ -130,7 +139,7 @@ void SpeedControlF (int initialSpeed, float targetAngle)
   }
 }
 
-void SpeedControlB (int initialSpeed, float targetAngle)
+void SpeedControlB ()                                                   // Speed Control Backward
 {
   Serial.println(targetAngle);
   int currentAngle = measure_angle();
@@ -160,7 +169,8 @@ void SpeedControlB (int initialSpeed, float targetAngle)
   }
 }
 
-void DriveForward (int initialSpeed, float targetAngle, float runTime)
+void DriveForward ()                                                    // Drive Forward
+
 {
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
@@ -170,7 +180,7 @@ void DriveForward (int initialSpeed, float targetAngle, float runTime)
   while (1)
   { 
     float currentTime = millis();
-    SpeedControlF(initialSpeed, targetAngle);
+    SpeedControlF();
     analogWrite(enA, pControlSpeedR);
     analogWrite(enB, pControlSpeedL);
     if ((currentTime - previousTime) > runTime)
@@ -181,7 +191,7 @@ void DriveForward (int initialSpeed, float targetAngle, float runTime)
   }
 }
 
-void DriveBackward (int initialSpeed, float targetAngle, float runTime)
+void DriveBackward ()                                                   // Drive Backward
 {
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
@@ -191,7 +201,7 @@ void DriveBackward (int initialSpeed, float targetAngle, float runTime)
   while (1)
   { 
     float currentTime = millis();
-    SpeedControlB(initialSpeed, targetAngle);
+    SpeedControlB();
     analogWrite(enA, pControlSpeedR);
     analogWrite(enB, pControlSpeedL);
     if ((currentTime - previousTime) > runTime)
@@ -202,7 +212,7 @@ void DriveBackward (int initialSpeed, float targetAngle, float runTime)
   }
 }
   
-void TurnOff ()
+void TurnOff ()                                                         // Motor Off
 {
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
