@@ -32,7 +32,7 @@ int maxSpeed = 255;
 int minSpeed = 0;
 
 // proportional control--------------------
-float kp = 5;      
+float kp = 15;      
 int pControlSpeedR;
 int pControlSpeedL;
 
@@ -66,10 +66,10 @@ void loop()
     switch (irReading)
     {
       case 6375:                // button 2
-        DriveForward(120,0);
+        DriveForward(120,0,10000);
         break;
       case 19125:               // button 8
-        DriveBackward(120,0);
+        DriveBackward(120,0,300);
         break;
       case 4335:                // button 4
         break;
@@ -100,14 +100,15 @@ float measure_angle(void)
   return z_angle;
 }
 
-void SpeedControl (int initialSpeed, float targetAngle)
+void SpeedControlF (int initialSpeed, float targetAngle)
 {
+  Serial.println(targetAngle);
   int currentAngle = measure_angle();
   if (currentAngle > 180)
   {
     currentAngle -= 360;
   }
-  
+  //Serial.println(currentAngle);
   pControlSpeedR = initialSpeed + (currentAngle - targetAngle)*kp;
   if (pControlSpeedR > maxSpeed)
   {
@@ -127,33 +128,80 @@ void SpeedControl (int initialSpeed, float targetAngle)
   {
     pControlSpeedL = minSpeed;
   }
-  Serial.print
-  Serial.println(pControlSpeedL);
-  Serial.println(pControlSpeedR);
 }
 
-void DriveForward (int initialSpeed, float targetAngle)
+void SpeedControlB (int initialSpeed, float targetAngle)
 {
-  SpeedControl(initialSpeed, targetAngle);
+  Serial.println(targetAngle);
+  int currentAngle = measure_angle();
+  if (currentAngle > 180)
+  {
+    currentAngle -= 360;
+  }
+  //Serial.println(currentAngle);
+  pControlSpeedR = initialSpeed - (currentAngle - targetAngle)*kp;
+  if (pControlSpeedR > maxSpeed)
+  {
+    pControlSpeedR = maxSpeed;
+  }
+  if (pControlSpeedR < minSpeed)
+  {
+    pControlSpeedR = minSpeed;
+  }
+  
+  pControlSpeedL = initialSpeed + (currentAngle - targetAngle)*kp;
+  if (pControlSpeedL > maxSpeed)
+  {
+    pControlSpeedL = maxSpeed;
+  }
+  if (pControlSpeedL < minSpeed)
+  {
+    pControlSpeedL = minSpeed;
+  }
+}
+
+void DriveForward (int initialSpeed, float targetAngle, float runTime)
+{
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
   digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
-  analogWrite(enA, pControlSpeedR);
-  analogWrite(enB, pControlSpeedL);
+  float previousTime = millis();
+  while (1)
+  { 
+    float currentTime = millis();
+    SpeedControlF(initialSpeed, targetAngle);
+    analogWrite(enA, pControlSpeedR);
+    analogWrite(enB, pControlSpeedL);
+    if ((currentTime - previousTime) > runTime)
+    {
+      TurnOff();
+      break;
+    }
+  }
 }
 
-void DriveBackward (int initialSpeed, float targetAngle)
+void DriveBackward (int initialSpeed, float targetAngle, float runTime)
 {
-  SpeedControl(initialSpeed, targetAngle);
   digitalWrite(in1, LOW);
   digitalWrite(in2, HIGH);
   digitalWrite(in3, LOW);
   digitalWrite(in4, HIGH);
-  analogWrite(enA, pControlSpeedR);
-  analogWrite(enB, pControlSpeedL);
+  float previousTime = millis();
+  while (1)
+  { 
+    float currentTime = millis();
+    SpeedControlB(initialSpeed, targetAngle);
+    analogWrite(enA, pControlSpeedR);
+    analogWrite(enB, pControlSpeedL);
+    if ((currentTime - previousTime) > runTime)
+    {
+      TurnOff();
+      break;
+    }
+  }
 }
-
+  
 void TurnOff ()
 {
   digitalWrite(in1, LOW);
