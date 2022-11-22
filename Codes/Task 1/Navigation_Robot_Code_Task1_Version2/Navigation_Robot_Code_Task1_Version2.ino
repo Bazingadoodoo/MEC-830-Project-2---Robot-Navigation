@@ -32,7 +32,7 @@ int maxSpeed = 255;
 int minSpeed = 0;
 
 // proportional control--------------------
-float kp = 15;      
+float kp = 5;      
 int pControlSpeedR;
 int pControlSpeedL;
 
@@ -127,6 +127,7 @@ void SpeedControl (int initialSpeed, float targetAngle)
   {
     pControlSpeedL = minSpeed;
   }
+  Serial.print
   Serial.println(pControlSpeedL);
   Serial.println(pControlSpeedR);
 }
