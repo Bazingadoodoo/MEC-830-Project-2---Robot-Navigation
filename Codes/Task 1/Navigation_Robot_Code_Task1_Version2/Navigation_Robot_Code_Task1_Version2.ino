@@ -30,15 +30,20 @@ decode_results irInput;
 #define in4 8       // backward
 int maxSpeed = 255;
 int minSpeed = 0;
+int maxSpeed2 = 77;
+int minSpeed2 = 0;
 
 // proportional control--------------------
-float kp = 15;      
+float kp = 15;
+float kp2 = 0.05;                          //0.3 for target = 70
 int pControlSpeedR;
 int pControlSpeedL;
 int initialSpeed;
 float runTime;
 float targetAngle;
-
+float carOrientation = 0;
+float carOrientation2 = 0;
+float currentAngle;
 
 void setup()                                                            // Setup
 {
@@ -82,8 +87,14 @@ void loop()                                                             // Main 
         DriveBackward();
         break;
       case 4335:                // button 4
+        initialSpeed = 85;
+        targetAngle = carOrientation2 - 90;
+        //RotateCCW ();
         break;
       case 23205:               // button 6
+        initialSpeed = 70;
+        targetAngle = 90;
+        RotateCW();
         break;
       case 14535:               // button 5
         TurnOff();
@@ -100,6 +111,14 @@ void loop()                                                             // Main 
   }
 }
 
+void TurnOff ()                                                         // Motor Off
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+}
+
 float measure_angle(void)                                               // IMU Angle Measurement
 {
   float z_angle;
@@ -112,13 +131,16 @@ float measure_angle(void)                                               // IMU A
 
 void SpeedControlF ()                                                   // Speed Control Forward
 {
-  int currentAngle = measure_angle();
-  if (currentAngle > 180)
+  currentAngle = measure_angle();
+  if (targetAngle == 0)
   {
-    currentAngle -= 360;
+    if (currentAngle > 180)
+    {
+      currentAngle -= 360;
+    }
   }
   //Serial.println(currentAngle);
-  pControlSpeedR = initialSpeed + (currentAngle - targetAngle)*kp;
+  pControlSpeedR = initialSpeed + (currentAngle - targetAngle) * kp;
   if (pControlSpeedR > maxSpeed)
   {
     pControlSpeedR = maxSpeed;
@@ -127,8 +149,8 @@ void SpeedControlF ()                                                   // Speed
   {
     pControlSpeedR = minSpeed;
   }
-  
-  pControlSpeedL = initialSpeed - (currentAngle - targetAngle)*kp;
+
+  pControlSpeedL = initialSpeed - (currentAngle - targetAngle) * kp;
   if (pControlSpeedL > maxSpeed)
   {
     pControlSpeedL = maxSpeed;
@@ -141,14 +163,16 @@ void SpeedControlF ()                                                   // Speed
 
 void SpeedControlB ()                                                   // Speed Control Backward
 {
-  Serial.println(targetAngle);
-  int currentAngle = measure_angle();
-  if (currentAngle > 180)
+  currentAngle = measure_angle();
+  if (targetAngle == 0)
   {
-    currentAngle -= 360;
+    if (currentAngle > 180)
+    {
+      currentAngle -= 360;
+    }
   }
   //Serial.println(currentAngle);
-  pControlSpeedR = initialSpeed - (currentAngle - targetAngle)*kp;
+  pControlSpeedR = initialSpeed - (currentAngle - targetAngle) * kp;
   if (pControlSpeedR > maxSpeed)
   {
     pControlSpeedR = maxSpeed;
@@ -157,8 +181,8 @@ void SpeedControlB ()                                                   // Speed
   {
     pControlSpeedR = minSpeed;
   }
-  
-  pControlSpeedL = initialSpeed + (currentAngle - targetAngle)*kp;
+
+  pControlSpeedL = initialSpeed + (currentAngle - targetAngle) * kp;
   if (pControlSpeedL > maxSpeed)
   {
     pControlSpeedL = maxSpeed;
@@ -170,7 +194,6 @@ void SpeedControlB ()                                                   // Speed
 }
 
 void DriveForward ()                                                    // Drive Forward
-
 {
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
@@ -178,7 +201,7 @@ void DriveForward ()                                                    // Drive
   digitalWrite(in4, LOW);
   float previousTime = millis();
   while (1)
-  { 
+  {
     float currentTime = millis();
     SpeedControlF();
     analogWrite(enA, pControlSpeedR);
@@ -199,7 +222,7 @@ void DriveBackward ()                                                   // Drive
   digitalWrite(in4, HIGH);
   float previousTime = millis();
   while (1)
-  { 
+  {
     float currentTime = millis();
     SpeedControlB();
     analogWrite(enA, pControlSpeedR);
@@ -211,11 +234,80 @@ void DriveBackward ()                                                   // Drive
     }
   }
 }
-  
-void TurnOff ()                                                         // Motor Off
+
+void SpeedControlRotation ()                                            // Speed Control Rotation
+{
+  Serial.println("received");
+  currentAngle = measure_angle();
+  Serial.print("current: ");
+  Serial.println(currentAngle);
+  if ((targetAngle == 0) | (targetAngle == 90))
+  {
+    if (currentAngle > 180)
+    {
+      currentAngle -= 360;
+    }
+  }
+  pControlSpeedR = initialSpeed - (currentAngle - targetAngle) * kp2;
+  if (pControlSpeedR > maxSpeed2)
+  {
+    pControlSpeedR = maxSpeed2;
+  }
+  if (pControlSpeedR < minSpeed2)
+  {
+    pControlSpeedR = minSpeed2;
+
+  }  
+
+  pControlSpeedL = initialSpeed - (currentAngle - targetAngle) * kp2;
+  if (pControlSpeedL > maxSpeed2)
+  {
+    pControlSpeedL = maxSpeed2;
+  }
+  if (pControlSpeedL < minSpeed2)
+  {
+    pControlSpeedL = minSpeed2;
+  }
+  Serial.print("left speed: ");
+  Serial.print(pControlSpeedL);
+  Serial.print("  //  ");
+  Serial.print("Right speed: ");
+  Serial.println(pControlSpeedR);
+}
+
+void RotateCW ()                                                        // Rotate Clockwise
 {
   digitalWrite(in1, LOW);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
+  currentAngle = measure_angle();
+  if ((targetAngle == 0) | (targetAngle == 90))
+  {
+    if (currentAngle > 180)
+    {
+      currentAngle -= 360;
+    }
+  }
+  //Serial.print("current angle: ");
+  //Serial.println(currentAngle);
+  while (1)
+  {
+    Serial.print("error: ");
+    Serial.println(abs(currentAngle - targetAngle));
+    SpeedControlRotation();
+    analogWrite(enA, pControlSpeedR);
+    analogWrite(enB, pControlSpeedL);
+    currentAngle = measure_angle();
+  
+    if (abs(currentAngle - targetAngle) < 2)
+    {
+      delay(100);
+      if (abs(currentAngle - targetAngle) < 2)
+      {
+        TurnOff();
+        break;
+      }
+    }
+  }
 }
