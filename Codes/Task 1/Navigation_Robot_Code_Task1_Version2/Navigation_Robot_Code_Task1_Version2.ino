@@ -6,15 +6,6 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 float angle_offset;
 float angle;
 
-// encoder---------------------------------
-#define leftEncoderPin 2
-#define rightEncoderPin 3
-float diskSlot = 20;
-int leftCounter = 0;
-int rightCounter = 0;
-int Right = 0;
-int Left = 0;
-
 // IR receiver-----------------------------
 #include <IRremote.hpp>
 #define irPin 11
@@ -30,92 +21,56 @@ decode_results irInput;
 #define in4 8       // backward
 int maxSpeed = 255;
 int minSpeed = 0;
-int maxSpeed2 = 77;
+int maxSpeed2 = 85;
 int minSpeed2 = 0;
 
 // proportional control--------------------
-float kp = 15;
-float kp2 = 0.05;                          //0.3 for target = 70
-int pControlSpeedR;
-int pControlSpeedL;
-int initialSpeed;
-float runTime;
-float targetAngle;
-float carOrientation = 0;
-float carOrientation2 = 0;
+float kp = 15, kp2 = 0.1;                          //0.3 for target = 70
+int pControlSpeedR, pControlSpeedL, pControlSpeed;
+int initialSpeed, initialSpeedRotation = 68;
+float runTime, runTimeF = 1300, runTimeB = 400;
 float currentAngle;
-
-void setup()                                                            // Setup
-{
-  Serial.begin(9600);
-  irReceive.enableIRIn();
-  Serial.println();
-  Serial.println("Calibrating IMU");
-  if (!bno.begin())
-  {
-    Serial.print("no imu sensor detected");
-    while (1);
-  }
-  delay(2000);
-  bno.setExtCrystalUse(true);
-  Serial.println("Done Calibrating");
-  Serial.println("Starting...");
-  sensors_event_t event;
-  bno.getEvent(&event);
-  angle_offset = event.orientation.x;
-  Serial.print("Offset: ");
-  Serial.println(angle_offset);
-}
-
-void loop()                                                             // Main Loop
-{
-  if (irReceive.decode(&irInput))
-  {
-    int irReading = irInput.value;
-    switch (irReading)
-    {
-      case 6375:                // button 2
-        initialSpeed = 120;
-        targetAngle = 0;
-        runTime = 5000;
-        DriveForward();
-        break;
-      case 19125:               // button 8
-        initialSpeed = 120;
-        targetAngle = 0;
-        runTime = 5000;
-        DriveBackward();
-        break;
-      case 4335:                // button 4
-        initialSpeed = 85;
-        targetAngle = carOrientation2 - 90;
-        //RotateCCW ();
-        break;
-      case 23205:               // button 6
-        initialSpeed = 70;
-        targetAngle = 90;
-        RotateCW();
-        break;
-      case 14535:               // button 5
-        TurnOff();
-        break;
-      case 12495:               // button 1
-        break;
-      case 31365:               // button 3
-        break;
-      case -1:                  // holding button
-        break;
-    }
-    irReceive.resume();
-    //Serial.println(irReading);
-  }
-}
+float targetAngle;
+int CW = 0, CCW = 0, stopRotate = 0;
+int orientation = 0;
 
 void TurnOff ()                                                         // Motor Off
 {
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
+  digitalWrite(in4, LOW);
+}
+
+void forward ()                                                         // Forward
+{
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+}
+
+void backward ()                                                        // Backward
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+}
+
+void left ()                                                            // Turn Left
+{
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+}
+
+void right ()                                                           // Turn Right
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
   digitalWrite(in4, LOW);
 }
 
@@ -139,7 +94,6 @@ void SpeedControlF ()                                                   // Speed
       currentAngle -= 360;
     }
   }
-  //Serial.println(currentAngle);
   pControlSpeedR = initialSpeed + (currentAngle - targetAngle) * kp;
   if (pControlSpeedR > maxSpeed)
   {
@@ -195,10 +149,7 @@ void SpeedControlB ()                                                   // Speed
 
 void DriveForward ()                                                    // Drive Forward
 {
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
+  forward();
   float previousTime = millis();
   while (1)
   {
@@ -216,10 +167,7 @@ void DriveForward ()                                                    // Drive
 
 void DriveBackward ()                                                   // Drive Backward
 {
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
+  backward();
   float previousTime = millis();
   while (1)
   {
@@ -237,50 +185,51 @@ void DriveBackward ()                                                   // Drive
 
 void SpeedControlRotation ()                                            // Speed Control Rotation
 {
-  Serial.println("received");
   currentAngle = measure_angle();
-  Serial.print("current: ");
-  Serial.println(currentAngle);
   if ((targetAngle == 0) | (targetAngle == 90))
   {
     if (currentAngle > 180)
     {
       currentAngle -= 360;
     }
+  Serial.print("current: ");
+  Serial.println(currentAngle);
   }
-  pControlSpeedR = initialSpeed - (currentAngle - targetAngle) * kp2;
-  if (pControlSpeedR > maxSpeed2)
+  float error = currentAngle - targetAngle;
+  if (error < -1)
   {
-    pControlSpeedR = maxSpeed2;
+    pControlSpeed = initialSpeed - (currentAngle - targetAngle) * kp2;
+    //pControlSpeedR = initialSpeed - (currentAngle - targetAngle) * kp2;
+    //pControlSpeedL = initialSpeed - (currentAngle - targetAngle) * kp2;
+    CW = 1; CCW = 0; stopRotate = 0; 
+    Serial.println(CW);
   }
-  if (pControlSpeedR < minSpeed2)
+  else if (error > 1)
   {
-    pControlSpeedR = minSpeed2;
-
-  }  
-
-  pControlSpeedL = initialSpeed - (currentAngle - targetAngle) * kp2;
-  if (pControlSpeedL > maxSpeed2)
-  {
-    pControlSpeedL = maxSpeed2;
+    pControlSpeed = initialSpeed + (currentAngle - targetAngle) * kp2;
+    //pControlSpeedR = initialSpeed + (currentAngle - targetAngle) * kp2;
+    //pControlSpeedL = initialSpeed + (currentAngle - targetAngle) * kp2;
+    CW = 0; CCW = 1; stopRotate = 0;
+    Serial.println(CCW);
   }
-  if (pControlSpeedL < minSpeed2)
+  else 
   {
-    pControlSpeedL = minSpeed2;
+    pControlSpeed = 0;
+    CW = 0; CCW = 0; stopRotate = 1;
+    Serial.println(stopRotate);
   }
-  Serial.print("left speed: ");
-  Serial.print(pControlSpeedL);
-  Serial.print("  //  ");
-  Serial.print("Right speed: ");
-  Serial.println(pControlSpeedR);
+  if (pControlSpeed > maxSpeed2)
+  {
+    pControlSpeed = maxSpeed2;
+  }
+  if (pControlSpeed < minSpeed2)
+  {
+    pControlSpeed = minSpeed2;
+  }
 }
 
 void RotateCW ()                                                        // Rotate Clockwise
 {
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
   currentAngle = measure_angle();
   if ((targetAngle == 0) | (targetAngle == 90))
   {
@@ -294,20 +243,166 @@ void RotateCW ()                                                        // Rotat
   while (1)
   {
     Serial.print("error: ");
-    Serial.println(abs(currentAngle - targetAngle));
+    Serial.println((currentAngle - targetAngle));
     SpeedControlRotation();
-    analogWrite(enA, pControlSpeedR);
-    analogWrite(enB, pControlSpeedL);
-    currentAngle = measure_angle();
-  
-    if (abs(currentAngle - targetAngle) < 2)
+    if (CW)
     {
-      delay(100);
-      if (abs(currentAngle - targetAngle) < 2)
-      {
+      right();
+      Serial.println("right");
+    }
+    if (CCW)
+    {
+      left();
+      Serial.println("left");
+    }
+    if (stopRotate)
+    {
+      TurnOff();
+      break;
+    }
+    analogWrite(enA, pControlSpeed);
+    analogWrite(enB, pControlSpeed);
+    Serial.print("control speed: "); 
+    Serial.println(pControlSpeed);
+    //analogWrite(enA, pControlSpeedR);
+    //analogWrite(enB, pControlSpeedL);
+  }
+}
+
+void RotateCCW ()                                                       // Rotate Counterclockwise
+{
+  currentAngle = measure_angle();
+  if ((targetAngle == 0) | (targetAngle == 270))
+  {
+    if (currentAngle < 180)
+    {
+      currentAngle += 360;
+    }
+  }
+  //Serial.print("current angle: ");
+  //Serial.println(currentAngle);
+  while (1)
+  {
+    Serial.print("error: ");
+    Serial.println((currentAngle - targetAngle));
+    SpeedControlRotation();
+    if (CW)
+    {
+      right();
+      Serial.println("right");
+    }
+    if (CCW)
+    {
+      left();
+      Serial.println("left");
+    }
+    if (stopRotate)
+    {
+      TurnOff();
+      break;
+    }
+    analogWrite(enA, pControlSpeed);
+    analogWrite(enB, pControlSpeed);
+    Serial.print("control speed: "); 
+    Serial.println(pControlSpeed);
+    //analogWrite(enA, pControlSpeedR);
+    //analogWrite(enB, pControlSpeedL);
+  }
+}
+
+void setup()                                                            // Setup
+{
+  Serial.begin(9600);
+  irReceive.enableIRIn();
+  Serial.println();
+  Serial.println("Calibrating IMU");
+  if (!bno.begin())
+  {
+    Serial.print("no imu sensor detected");
+    while (1);
+  }
+  delay(2000);
+  bno.setExtCrystalUse(true);
+  Serial.println("Done Calibrating");
+  Serial.println("Starting...");
+  sensors_event_t event;
+  bno.getEvent(&event);
+  angle_offset = event.orientation.x;
+}
+
+void loop()                                                             // Main Loop
+{
+  if (irReceive.decode(&irInput))
+  {
+    int irReading = irInput.value;
+    switch (irReading)
+    {
+      case -26521:                          // face North
+        initialSpeed = initialSpeedRotation;
+        orientation = 0;
+        targetAngle = orientation;
+        RotateCCW();
+        break;
+      case 6375:                            // button 2 - go straight
+        initialSpeed = 120;
+        targetAngle = orientation;
+        runTime = runTimeF;
+        DriveForward();
+        break;
+      case 19125:                           // button 8 - go backward
+        initialSpeed = 120;
+        targetAngle = orientation;
+        runTime = runTimeB;
+        DriveBackward();
+        break;
+      case 4335:                            // button 4 - face left
+        initialSpeed = initialSpeedRotation;
+        orientation -= 90;
+        if (orientation < 0)
+        {
+          orientation =+ 360;
+        }
+        targetAngle = orientation;
+        RotateCCW();
+        break;
+      case 23205:                           // button 6 - face right
+        initialSpeed = initialSpeedRotation;
+        orientation += 90;
+        targetAngle = orientation;
+        RotateCCW();
+        break;
+      case 12495:                           // button 1 - turn left (5 degrees)
+        initialSpeed = initialSpeedRotation;
+        orientation =- 5;
+        if (orientation < 0)
+        {
+          orientation =+ 360;
+        }
+        targetAngle = orientation;
+        RotateCCW();
+        break;
+      case 31365:                           // button 3 - turn right (5 degrees)
+        initialSpeed = initialSpeedRotation;
+        orientation += 5;
+        targetAngle = orientation;
+        RotateCW();
+        break;
+      case 17085:                           // button 7 - face West
+        initialSpeed = initialSpeedRotation;
+        orientation = 270;
+        targetAngle = orientation;
+        RotateCCW();
+        break;
+      case 21165:                           // button 9 - face East
+        initialSpeed = initialSpeedRotation;
+        orientation = 90;
+        targetAngle = orientation;
+        RotateCW();
+        break;
+      case 14535:                           // button 5 - stop button
         TurnOff();
         break;
-      }
     }
+    irReceive.resume();
   }
 }

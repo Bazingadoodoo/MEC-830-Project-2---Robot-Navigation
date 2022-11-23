@@ -86,8 +86,8 @@ void DriveForward(int motorSpeed, double delayTime){
   Left = 1;
   digitalWrite(in1, HIGH);
   digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
   analogWrite(enA, motorSpeed);
   analogWrite(enB, motorSpeed);
   delay(delayTime);
@@ -153,12 +153,6 @@ void setup() {
   sensors_event_t event;
   bno.getEvent(&event);
   angle_offset = event.orientation.x; //get z-axis rotation angle
-  angle_offset_mapped = angle_offset + 180;
-  if (angle_offset_mapped >360){
-    angle_offset_mapped = angle_offset_mapped - 360;
-    Serial.print("Offset: ");
-    Serial.println(angle_offset_mapped);
-  }
 }
 void loop() {
-}
+DriveForward (78,1);}
