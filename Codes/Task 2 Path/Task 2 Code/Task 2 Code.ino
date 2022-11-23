@@ -64,6 +64,7 @@ double output_drive;
 //Proportional Control
 int pControlSpeedR;
 int pControlSpeedL;
+float kp = 15.0;
 int initialSpeed;
 float targetAngle =0;
 int maxSpeed = 255;
@@ -272,6 +273,7 @@ void loop() {
     else
     { 
       drive_straight(120);
+     
     }
   }
 
@@ -286,13 +288,14 @@ void loop() {
       myPID_rotate.SetMode(MANUAL);
       checkpoint_2=0;
       checkpoint_3=1;
+      targetAngle = 0.0;
       setpoint_drive = 0.0;
       myPID_drive.SetMode(AUTOMATIC);
     }
     else
     { 
-      SpeedControlF(120);
-      //drive_straight(120);
+      
+      drive_straight(120);
     }
   }
 
@@ -308,8 +311,8 @@ void loop() {
       checkpoint_3 =0.0;
     }
     else
-    {  SpeedControlF(120);
-      //drive_straight(120);
+    {  
+       drive_straight(120);
     }
   }
 
