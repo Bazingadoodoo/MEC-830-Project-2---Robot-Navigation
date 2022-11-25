@@ -18,6 +18,7 @@ bool start = 1;
 bool checkpoint_1 =0;
 bool checkpoint_2 =0;
 bool checkpoint_3 = 0;
+bool checkpoint_4 = 0;
 bool rotateR = 1;
 
 // ultrasonic sensor-----------------------
@@ -103,33 +104,7 @@ void drive_straight(double set_speed){
   setMotorL(leftSpeed);
 }
 
-void SpeedControlF (int initialSpeed)                                                   // Speed Control Forward
-{
-  int currentAngle = measure_angle();
 
-  pControlSpeedR = initialSpeed + (currentAngle - targetAngle)*kp;
-  if (pControlSpeedR > maxSpeed)
-  {
-    pControlSpeedR = maxSpeed;
-  }
-  if (pControlSpeedR < minSpeed)
-  {
-    pControlSpeedR = minSpeed;
-  }
-  
-  pControlSpeedL = initialSpeed - (currentAngle - targetAngle)*kp;
-  if (pControlSpeedL > maxSpeed)
-  {
-    pControlSpeedL = maxSpeed;
-  }
-  if (pControlSpeedL < minSpeed)
-  {
-    pControlSpeedL = minSpeed;
-  }
-
-  setMotorR(pControlSpeedR);
-  setMotorL(pControlSpeedL);
-}
 
 void rotate(){
   delay(1000);
@@ -214,7 +189,20 @@ float obstacle_detection(void)
   float duration = pulseIn(echoPin, HIGH);
   float obstacle_distance = (duration * 0.034 / 2.0) * 1.0227 + 0.0031;
   return obstacle_distance;
-  
+}
+
+float avoid(float previousTime, float interval){
+  float currentTime = millis();
+  while ((currentTime - previousTime) <interval){
+    currentTime = millis();
+    drive_straight(120);
+  }
+}
+
+float avoidance_path(int leftMotor, int rightMotor, float timeDelay){
+  setMotorL(leftMotor);
+  setMotorR(rightMotor);
+  delay(timeDelay);
 }
 
 void setup() {
@@ -250,70 +238,58 @@ void setup() {
 
 
 void loop() {
+  float loopTime = millis();
   angle = measure_angle();
   if (start){
     myPID_drive.SetMode(AUTOMATIC);
     start = 0;
-    checkpoint_1 =1;
+    checkpoint_1 = 1;
   }
 
   if (checkpoint_1){
     distance = obstacle_detection();
-    if (distance <= 22){
+    if (distance <= 30){
       myPID_drive.SetMode(MANUAL);
+      avoidance_path(180,60,600);
+      avoidance_path(60,140,500);
+      myPID_drive.SetMode(AUTOMATIC);
+      loopTime = millis();
+      avoid(loopTime,500);
+      avoidance_path(60,140,500);
+      avoidance_path(180,60,600);
+      myPID_drive.SetMode(AUTOMATIC);
+      avoid(loopTime,2000);
       stop_car();
-      myPID_rotate.SetMode(AUTOMATIC);
-      rotate();
-      myPID_rotate.SetMode(MANUAL);
       checkpoint_1=0;
-      checkpoint_2=1;
-      setpoint_drive = 90.0;
-      myPID_drive.SetMode(AUTOMATIC);
     }
     else
     { 
-      drive_straight(120);
-     
+    drive_straight(110);
     }
   }
+  
 
-  if (checkpoint_2){
-    distance = obstacle_detection();
-    if (distance <= 22){
-      myPID_drive.SetMode(MANUAL);
-      stop_car();
-      setpoint_rotate = 0.0;
-      myPID_rotate.SetMode(AUTOMATIC);
-      rotate();
-      myPID_rotate.SetMode(MANUAL);
-      checkpoint_2=0;
-      checkpoint_3=1;
-      targetAngle = 0.0;
-      setpoint_drive = 0.0;
-      myPID_drive.SetMode(AUTOMATIC);
-    }
-    else
-    { 
-      
-      drive_straight(120);
-    }
-  }
+  // if (checkpoint_2){
+  //   Serial.println("Checkpoint 2");
+  //   avoid(loopTime,1500);
+  //   checkpoint_2 = 0;
+  //   checkpoint_3 = 1;
+  //   setpoint_drive = -45.0;
+  // }
 
-  if (checkpoint_3){
-    distance = obstacle_detection();
-    if (distance <= 22){
-      myPID_drive.SetMode(MANUAL);
-      stop_car();
-      setpoint_rotate = 0.0;
-      myPID_rotate.SetMode(AUTOMATIC);
-      rotate();
-      myPID_rotate.SetMode(MANUAL);
-      checkpoint_3 =0.0;
-    }
-    else
-    {  
-       drive_straight(120);
-    }
-  }
+  // if (checkpoint_3){
+  //   Serial.println("Checkpoint 3");
+  //   avoid(loopTime,1500);
+  //   setpoint_drive = 0.0;
+  //   checkpoint_3 = 0;
+  //   checkpoint_4 = 1;
+  // }
+
+  // if (checkpoint_4){
+  //   Serial.println("Checkpoint4");
+  //   avoid(loopTime,1000);
+  //   checkpoint_4 =0;
+  //   stop_car();
+  // }
 
 }

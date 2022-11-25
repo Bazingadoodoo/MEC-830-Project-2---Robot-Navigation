@@ -18,6 +18,8 @@ bool start = 1;
 bool checkpoint_1 =0;
 bool checkpoint_2 =0;
 bool checkpoint_3 = 0;
+bool checkpoint_4 = 0;
+bool switchCoordinates = 1; 
 bool rotateR = 1;
 
 // ultrasonic sensor-----------------------
@@ -52,7 +54,7 @@ double Kd_A = 0.4;
 //8, 0.3, 0.4
 
 double Kp_R = 2;
-double Ki_R = 0.5;
+double Ki_R = 0.8;
 double Kd_R = 0;
 //2, 0.9, 0.0
 
@@ -103,34 +105,6 @@ void drive_straight(double set_speed){
   setMotorL(leftSpeed);
 }
 
-void SpeedControlF (int initialSpeed)                                                   // Speed Control Forward
-{
-  int currentAngle = measure_angle();
-
-  pControlSpeedR = initialSpeed + (currentAngle - targetAngle)*kp;
-  if (pControlSpeedR > maxSpeed)
-  {
-    pControlSpeedR = maxSpeed;
-  }
-  if (pControlSpeedR < minSpeed)
-  {
-    pControlSpeedR = minSpeed;
-  }
-  
-  pControlSpeedL = initialSpeed - (currentAngle - targetAngle)*kp;
-  if (pControlSpeedL > maxSpeed)
-  {
-    pControlSpeedL = maxSpeed;
-  }
-  if (pControlSpeedL < minSpeed)
-  {
-    pControlSpeedL = minSpeed;
-  }
-
-  setMotorR(pControlSpeedR);
-  setMotorL(pControlSpeedL);
-}
-
 void rotate(){
   delay(1000);
   while (1){
@@ -150,6 +124,31 @@ void rotate(){
     }
   }
 
+void rotate2(){
+  delay(1000);
+  while (1){
+    angleR = measure_angle();
+    
+    if ((-90 <= angleR) && (angleR <= 0))
+    {
+      angleR = angleR + 360;
+    }
+    Serial.println(angleR);
+  
+    float error = abs(((angleR - setpoint_rotate)/(90.0))*100);
+    myPID_rotate.Compute();
+    double rightRotate = -output_rotate;
+    double leftRotate = output_rotate;
+    setMotorR(rightRotate);
+    setMotorL(leftRotate);
+
+    if (error<1)
+      {
+        stop_car();
+        break;
+      }
+    }
+  }
 
 void setMotorR(int pwmR) {
 
@@ -188,7 +187,7 @@ void setMotorL(int pwmL) {
 }
 
 
-double measure_angle(void)
+double measure_angle()
 {
   double z_angle;// to determine absolute orientation 
   /* Get a new sensor event */ 
@@ -196,12 +195,14 @@ double measure_angle(void)
   bno.getEvent(&event);
   z_angle = event.orientation.x; //get z-axis rotation angle
 
-  if (z_angle > 180){
-    z_angle = z_angle - 360;
-  }
+  if ((270.0 <= z_angle) && (z_angle <= 360))
+    {
+      z_angle = z_angle - 360;
+    }
 
   return z_angle;
 }
+
 
 float obstacle_detection(void)
 {
@@ -251,6 +252,7 @@ void setup() {
 
 void loop() {
   angle = measure_angle();
+
   if (start){
     myPID_drive.SetMode(AUTOMATIC);
     start = 0;
@@ -282,19 +284,17 @@ void loop() {
     if (distance <= 22){
       myPID_drive.SetMode(MANUAL);
       stop_car();
-      setpoint_rotate = 0.0;
+      setpoint_rotate = 180.0;
       myPID_rotate.SetMode(AUTOMATIC);
       rotate();
       myPID_rotate.SetMode(MANUAL);
       checkpoint_2=0;
       checkpoint_3=1;
-      targetAngle = 0.0;
-      setpoint_drive = 0.0;
+      setpoint_drive = 180.0;
       myPID_drive.SetMode(AUTOMATIC);
     }
     else
     { 
-      
       drive_straight(120);
     }
   }
@@ -304,16 +304,36 @@ void loop() {
     if (distance <= 22){
       myPID_drive.SetMode(MANUAL);
       stop_car();
-      setpoint_rotate = 0.0;
+      setpoint_rotate = 270.0;
       myPID_rotate.SetMode(AUTOMATIC);
-      rotate();
+      rotate2();
       myPID_rotate.SetMode(MANUAL);
-      checkpoint_3 =0.0;
+      checkpoint_3 =0;
+      checkpoint_4 = 1;
+      setpoint_drive = 270.0;
+      myPID_drive.SetMode(AUTOMATIC);
     }
     else
     {  
        drive_straight(120);
     }
   }
+
+  if (checkpoint_4){
+    if ((-90 <= angle) && (angle <= 0))
+    {
+      angle = angle + 360;
+    }
+    distance = obstacle_detection();
+    if (distance <= 22){
+      myPID_drive.SetMode(MANUAL);
+      stop_car();
+      checkpoint_4 = 0;
+    }
+    else
+    {  
+      drive_straight(120);
+    }
+}
 
 }
