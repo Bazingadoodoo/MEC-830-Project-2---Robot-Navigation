@@ -6,31 +6,6 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 float angle_offset;
 float angle;
 
-// encoder---------------------------------
-#include <TimerOne.h>
-#define leftEncoderPin 2
-#define rightEncoderPin 3
-float diskSlot = 20;
-int leftCounter = 0;
-int rightCounter = 0;
-int Right = 0;
-int Left = 0;
-
-// ultrasonic sensor-----------------------
-#define trigPin 4
-#define echoPin 5   
-
-// servo motor-----------------------------
-/*#include <Servo.h>
-#define servoPin 6
-Servo myservo;*/
-
-// IR receiver-----------------------------
-#include <IRremote.hpp>
-#define irPin 11
-IRrecv irReceive(irPin);
-decode_results irInput;
-
 // motor driver----------------------------
 #define enA 9       // right wheel
 #define enB 6       // left wheel
@@ -39,105 +14,144 @@ decode_results irInput;
 #define in3 7       // backward
 #define in4 8       // forward
 
-void ISR_Left(){
-  if (Left){
-    leftCounter++;
-  }
-  else{
-    leftCounter--;
-  }
-}
-
-void ISR_Right(){
-  if (Right){
-    rightCounter++;
-  }
-  else{
-    rightCounter--;
-  }
-}
-
-
-
-void TurnRight(int motorSpeed, double delayTime){
-  Right = 0;
-  Left = 1;
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void TurnLeft(int motorSpeed, double delayTime){
-  Right = 1;
-  Left = 0;
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void DriveForward(int motorSpeed, double delayTime){
-  Right = 1;
-  Left = 1;
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void DriveBackward(int motorSpeed, double delayTime){
-  Right = 0;
-  Left = 0;
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
-  analogWrite(enA, motorSpeed);
-  analogWrite(enB, motorSpeed);
-  delay(delayTime);
-}
-
-void TurnOff(){
+void TurnOff() {                                                        // Turn Off
   digitalWrite(in1, LOW);
   digitalWrite(in2, LOW);
   digitalWrite(in3, LOW);
   digitalWrite(in4, LOW);
 }
 
-float measure_angle(void)
+float measure_angle(void)                                               // Angle Measurement
 {
-  float z_angle;// to determine absolute orientation 
-  /* Get a new sensor event */ 
-  sensors_event_t event; 
+  float z_angle;// to determine absolute orientation
+  /* Get a new sensor event */
+  sensors_event_t event;
   bno.getEvent(&event);
   z_angle = event.orientation.x; //get z-axis rotation angle
   Serial.println(z_angle);
   return z_angle;
 }
 
-void Odometry(float offsetR, float offsetL) {  
-  float R = 0.03325;
-  float SR = ((rightCounter - offsetR)/20)*(2*PI*R);
-  float SL = ((leftCounter - offsetL)/20)*(2*PI*R);
-  float meanDistance = (SR+SL)/2;
-  return meanDistance;
+void forward ()                                                         // Forward
+{
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+}
+
+void backward ()                                                        // Backward
+{
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+}
+
+void left ()                                                            // Turn Left
+{
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+}
+
+void SpeedControlF ()                                                   // Speed Control Forward
+{
+  currentAngle = measure_angle();
+  if (targetAngle == 0)
+  {
+    if (currentAngle > 180)
+    {
+      currentAngle -= 360;
+    }
+  }
+  pControlSpeedR = initialSpeed + (currentAngle - targetAngle) * kp;
+  if (pControlSpeedR > maxSpeed)
+  {
+    pControlSpeedR = maxSpeed;
+  }
+  if (pControlSpeedR < minSpeed)
+  {
+    pControlSpeedR = minSpeed;
+  }
+
+  pControlSpeedL = initialSpeed - (currentAngle - targetAngle) * kp;
+  if (pControlSpeedL > maxSpeed)
+  {
+    pControlSpeedL = maxSpeed;
+  }
+  if (pControlSpeedL < minSpeed)
+  {
+    pControlSpeedL = minSpeed;
+  }
+}
+
+void DriveForward ()                                                    // Drive Forward
+{
+  forward();
+  float previousTime = millis();
+  while (1)
+  {
+    float currentTime = millis();
+    SpeedControlF();
+    analogWrite(enA, pControlSpeedR);
+    analogWrite(enB, pControlSpeedL);
+    if ((currentTime - previousTime) > runTime)
+    {
+      TurnOff();
+      break;
+    }
+  }
+}
+
+void SpeedControlRotation ()                                            // Speed Control Rotation
+{
+  currentAngle = measure_angle();
+  if ((targetAngle == 0) | (targetAngle == 90))
+  {
+    if ((currentAngle > 270) && (currentAngle < 360))
+    {
+      currentAngle -= 360;
+    }
+    Serial.print("current: ");
+    Serial.println(currentAngle);
+  }
+  float error = currentAngle - targetAngle;
+  if (error < -1)
+  {
+    pControlSpeed = initialSpeed - (currentAngle - targetAngle) * kp2;
+    //pControlSpeedR = initialSpeed - (currentAngle - targetAngle) * kp2;
+    //pControlSpeedL = initialSpeed - (currentAngle - targetAngle) * kp2;
+    CW = 1; CCW = 0; stopRotate = 0;
+    Serial.println(CW);
+  }
+  else if (error > 1)
+  {
+    pControlSpeed = initialSpeed + (currentAngle - targetAngle) * kp2;
+    //pControlSpeedR = initialSpeed + (currentAngle - targetAngle) * kp2;
+    //pControlSpeedL = initialSpeed + (currentAngle - targetAngle) * kp2;
+    CW = 0; CCW = 1; stopRotate = 0;
+    Serial.println(CCW);
+  }
+  else
+  {
+    pControlSpeed = 0;
+    CW = 0; CCW = 0; stopRotate = 1;
+    Serial.println(stopRotate);
+  }
+  if (pControlSpeed > maxSpeed2)
+  {
+    pControlSpeed = maxSpeed2;
+  }
+  if (pControlSpeed < minSpeed2)
+  {
+    pControlSpeed = minSpeed2;
+  }
 }
 
 void setup() {
   Serial.begin(9600);
-  attachInterrupt(digitalPinToInterrupt(leftEncoderPin),ISR_Left,RISING);
-  attachInterrupt(digitalPinToInterrupt(rightEncoderPin),ISR_Right,RISING);
-  irReceive.enableIRIn();
   Serial.println("Calibrating IMU");
 
   /* Initialise the sensor */
@@ -154,13 +168,8 @@ void setup() {
   Serial.println("Starting...");
   sensors_event_t event;
   bno.getEvent(&event);
-  angle_offset = event.orientation.x; //get z-axis rotation angle
-  angle_offset_mapped = angle_offset + 180;
-  if (angle_offset_mapped >360){
-    angle_offset_mapped = angle_offset_mapped - 360;
-    Serial.print("Offset: ");
-    Serial.println(angle_offset_mapped);
-  }
+  angle_offset = event.orientation.x;
+}
 }
 
 void loop() {
