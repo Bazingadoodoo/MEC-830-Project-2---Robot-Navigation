@@ -22,13 +22,14 @@ Group Member
  - pin 13: motor driver in2
 
 enA: right wheel, in1, in2
-enB: left wheel, in3, in4
-caster wheel diameter: 2.56cm
-rubber wheel radius: 6.65cm
-distance = (impulses/20)*10.4558cm
 
-Left and right wheel PWM
-100 <=> 68
+enB: left wheel, in3, in4
+
+caster wheel diameter: 2.56cm
+
+rubber wheel radius: 6.65cm
+
+distance = (impulses/20)*10.4558cm
 
 remote buttons:
 -23971  25245   -7651
